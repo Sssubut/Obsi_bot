@@ -1,0 +1,6 @@
+{
+  "name": "Obsidian Telegram Bot Dashboard",
+  "description": "A full-stack interactive dashboard and simulator for the Telegram Obsidian Bot. Manage your Obsidian markdown vault, talk with the simulated Telegram Bot, edit notes, and view statistics.",
+  "requestFramePermissions": ["microphone"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
