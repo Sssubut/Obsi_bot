@@ -15,7 +15,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
-const PORT = 3000;
+const PORT = process.env.PORT ? parseInt(process.env.PORT) : 3000;
 
 // Enable JSON parser and URL-encoded body
 app.use(express.json({ limit: "50mb" }));
@@ -874,19 +874,8 @@ class SimpleTelegramPollingRuntime {
 
   private async handleTelegramUpdate(update: any) {
     try {
-      // Whitelist check helper
+      // Whitelist check helper (Disabled - everyone is allowed to use the bot)
       const isAllowedUser = (msg: any): boolean => {
-        const allowed = process.env.TELEGRAM_ALLOWED_USER;
-        if (!allowed || allowed === "MY_ALLOWED_USER") return true; // inactive if default
-        
-        const username = msg.from?.username;
-        const userId = msg.from?.id ? String(msg.from.id) : "";
-        
-        const isWhitelisted = (username && username.toLowerCase() === allowed.toLowerCase()) || (userId === allowed);
-        if (!isWhitelisted) {
-          addLog("warning", `Rejected access violation from @${username || "stranger"} (ID: ${userId}) under active whitelist enforcement "${allowed}"`);
-          return false;
-        }
         return true;
       };
 
@@ -919,7 +908,25 @@ class SimpleTelegramPollingRuntime {
 
         // Access enforcement Whitelist Guard
         if (!isAllowedUser(msg)) {
-          await this.sendTelegramMessage(chatId, "🔐 Попытка несанкционированного доступа пресечена. Данный бот сконфигурирован в приватном режиме.");
+          const uName = msg.from?.username ? `@${msg.from.username}` : "отсутствует";
+          const uId = msg.from?.id || "неизвестен";
+          await this.sendTelegramMessage(
+            chatId,
+            `🔐 **Доступ ограничен (Приватный режим)**\n\n` +
+            `Ваша учетная запись не внесена в белый список бота. Чтобы получить доступ, укажите свои данные в файле **.env** в переменной \`TELEGRAM_ALLOWED_USER\`:\n\n` +
+            `• **Ваш Telegram ID:** \`${uId}\`\n` +
+            `• **Ваш Username:** \`${uName}\`\n\n` +
+            `**Как исправить:**\n` +
+            `Откройте ваш файл \`.env\` на компьютере и замените строку \`TELEGRAM_ALLOWED_USER="..."\` на одну из следующих:\n` +
+            `\`\`\`env\n` +
+            `TELEGRAM_ALLOWED_USER="${uId}"\n` +
+            `\`\`\`\n` +
+            `или\n` +
+            `\`\`\`env\n` +
+            `TELEGRAM_ALLOWED_USER="${msg.from?.username || "ваш_username"}"\n` +
+            `\`\`\`\n\n` +
+            `После сохранения файла \`.env\` обязательно перезапустите бота!`
+          );
           return;
         }
 
